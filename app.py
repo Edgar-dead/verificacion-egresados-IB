@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import os
 
-# Configuración de la pestaña del navegador
 st.set_page_config(
     page_title="Verificación de Participantes",
     page_icon="🎓",
@@ -59,15 +58,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Encabezado visual
+# Encabezado institucional
 st.markdown('<div class="main-title">🎓 Verificación de Participantes</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Ingrese su número de documento para validar su acreditación</div>', unsafe_allow_html=True)
 
-# --- CONFIGURACIÓN DEL ARCHIVO EXCEL ---
+# --- CONFIGURACIÓN DE ARCHIVO Y ENLACE ÚNICO ---
 EXCEL_FILE = "nomina_egresados2025.xlsx"
-
-# Enlaces de WhatsApp a los grupos de atención
-# (Reemplace estos enlaces por los enlaces reales de invitación)
 ENLACE_WHATSAPP = "https://chat.whatsapp.com/K5XNthkg9QC8swVwl8K0KV"
 
 @st.cache_data
@@ -79,7 +75,6 @@ def cargar_datos(ruta_archivo):
     except Exception as e:
         return None, str(e)
 
-# Control de presencia del archivo
 if not os.path.exists(EXCEL_FILE):
     st.info(f"💡 Archivo '{EXCEL_FILE}' no detectado en el repositorio.")
     st.stop()
@@ -89,14 +84,13 @@ if error_carga:
     st.error(f"❌ Error al abrir la nómina: {error_carga}")
     st.stop()
 
-# Validación de las 4 columnas estructurales
 columnas_requeridas = ['N° de Cédula', 'Nombre y Apellido', 'Curso Culminado', 'Cohorte']
 columnas_faltantes = [col for col in columnas_requeridas if col not in df_datos.columns]
 if columnas_faltantes:
     st.error(f"❌ La planilla Excel requiere las siguientes columnas exactas: {', '.join(columnas_faltantes)}")
     st.stop()
 
-# --- INTERFAZ DE BÚSQUEDA ---
+# --- FORMULARIO DE CONSULTA ---
 with st.form(key="form_consulta"):
     cedula_in = st.text_input(
         "Número de Cédula de Identidad:",
@@ -125,7 +119,6 @@ if btn_consultar or st.session_state.get('verificado', False):
             
             st.success("✅ ¡Identidad Verificada! El registro figura en la nómina oficial.")
             
-            # Retorno en filas ordenadas
             st.markdown("### 📋 Información del Participante:")
             st.write(f"**Nombre y Apellido:** {nombre}")
             st.write(f"**Número de Cédula:** {ci}")
@@ -135,7 +128,6 @@ if btn_consultar or st.session_state.get('verificado', False):
             st.markdown("---")
             st.info("👋 Copie el siguiente bloque y envíelo al unirse al grupo de WhatsApp:")
             
-            # Formato de texto para el portapapeles
             texto_copiar = (
                 f"SOLICITUD DE MATRICULACIÓN:\n"
                 f"• Nombre y Apellido: {nombre}\n"
@@ -148,9 +140,8 @@ if btn_consultar or st.session_state.get('verificado', False):
             
             confirmado = st.checkbox("👉 Confirmo que copié los datos y los enviaré al ingresar al grupo.")
             
-            # Detección de perfil por palabra clave en el curso
-          if confirmado:
-    st.markdown(f'<a href="{ENLACE_WHATSAPP}" target="_blank" class="btn-whatsapp">💬 Unirse al Grupo de WhatsApp</a>', unsafe_allow_html=True)
+            if confirmado:
+                st.markdown(f'<a href="{ENLACE_WHATSAPP}" target="_blank" class="btn-whatsapp">💬 Unirse al Grupo de WhatsApp</a>', unsafe_allow_html=True)
             else:
                 st.warning("🔒 Marque la casilla de confirmación para habilitar el botón de acceso.")
         else:
@@ -158,6 +149,5 @@ if btn_consultar or st.session_state.get('verificado', False):
             st.error("❌ El documento ingresado no figura en la nómina.")
             st.info("ℹ️ Si concluyó el curso y no figura en la lista, contacte a la coordinación académica.")
 
-# Pie de página institucional
 st.markdown("---")
 st.markdown('<div class="footer">Sistema de Validación Institucional © 2026</div>', unsafe_allow_html=True)
