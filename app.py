@@ -68,8 +68,7 @@ EXCEL_FILE = "nomina_egresados2025.xlsx"
 
 # Enlaces de WhatsApp a los grupos de atención
 # (Reemplace estos enlaces por los enlaces reales de invitación)
-WHATSAPP_DOCENTES = "https://chat.whatsapp.com/EnlaceGrupoDocentes"
-WHATSAPP_DIRECTORES = "https://chat.whatsapp.com/EnlaceGrupoDirectores"
+ENLACE_WHATSAPP = "https://chat.whatsapp.com/K5XNthkg9QC8swVwl8K0KV"
 
 @st.cache_data
 def cargar_datos(ruta_archivo):
@@ -150,13 +149,8 @@ if btn_consultar or st.session_state.get('verificado', False):
             confirmado = st.checkbox("👉 Confirmo que copié los datos y los enviaré al ingresar al grupo.")
             
             # Detección de perfil por palabra clave en el curso
-            if "direct" in str(curso).lower():
-                enlace_destino = WHATSAPP_DIRECTORES
-            else:
-                enlace_destino = WHATSAPP_DOCENTES
-            
-            if confirmado:
-                st.markdown(f'<a href="{enlace_destino}" target="_blank" class="btn-whatsapp">💬 Unirse al Grupo de WhatsApp</a>', unsafe_allow_html=True)
+          if confirmado:
+    st.markdown(f'<a href="{ENLACE_WHATSAPP}" target="_blank" class="btn-whatsapp">💬 Unirse al Grupo de WhatsApp</a>', unsafe_allow_html=True)
             else:
                 st.warning("🔒 Marque la casilla de confirmación para habilitar el botón de acceso.")
         else:
