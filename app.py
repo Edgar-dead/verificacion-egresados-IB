@@ -58,7 +58,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Encabezado institucional
 st.markdown('<div class="main-title">🎓 Verificación de Participantes</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Ingrese su número de documento para validar su acreditación</div>', unsafe_allow_html=True)
 
@@ -69,14 +68,15 @@ ENLACE_WHATSAPP = "https://chat.whatsapp.com/K5XNthkg9QC8swVwl8K0KV"
 @st.cache_data
 def cargar_datos(ruta_archivo):
     try:
-        df = pd.read_excel(ruta_archivo, dtype={'N° de Cédula': str})
-        df['N° de Cédula'] = df['N° de Cédula'].str.strip()
+        df = pd.read_excel(ruta_archivo, dtype=str)
+        # Limpieza de espacios en los nombres de las columnas
+        df.columns = [str(c).strip() for c in df.columns]
         return df, None
     except Exception as e:
         return None, str(e)
 
 if not os.path.exists(EXCEL_FILE):
-    st.info(f"💡 Archivo '{EXCEL_FILE}' no detectado en el repositorio.")
+    st.error(f"❌ El archivo '{EXCEL_FILE}' no se encuentra en el repositorio.")
     st.stop()
 
 df_datos, error_carga = cargar_datos(EXCEL_FILE)
@@ -84,11 +84,29 @@ if error_carga:
     st.error(f"❌ Error al abrir la nómina: {error_carga}")
     st.stop()
 
-columnas_requeridas = ['N° de Cédula', 'Nombre y Apellido', 'Curso Culminado', 'Cohorte']
-columnas_faltantes = [col for col in columnas_requeridas if col not in df_datos.columns]
-if columnas_faltantes:
-    st.error(f"❌ La planilla Excel requiere las siguientes columnas exactas: {', '.join(columnas_faltantes)}")
+# --- DETECCIÓN INTELIGENTE DE COLUMNAS ---
+cols = list(df_datos.columns)
+
+def buscar_columna(opciones, lista_cols):
+    for op in opciones:
+        for c in lista_cols:
+            if op.lower() in c.lower().replace("°", "").replace("º", "").replace(".", ""):
+                return c
+    return None
+
+col_cedula = buscar_columna(["cedula", "ci", "documento", "n cedula"], cols)
+col_nombre = buscar_columna(["nombre", "apellido", "participante"], cols)
+col_curso = buscar_columna(["curso", "carrera", "programa"], cols)
+col_cohorte = buscar_columna(["cohorte", "promocion", "periodo"], cols)
+
+# Validación de existencia de columnas mínimas
+if not col_cedula:
+    st.error("❌ No se encontró la columna de cédula en la planilla.")
+    st.info(f"Las columnas detectadas en tu archivo son: {cols}")
     st.stop()
+
+# Asegurar tratamiento como texto sin espacios
+df_datos[col_cedula] = df_datos[col_cedula].astype(str).str.strip().str.replace(".", "", regex=False).str.replace("-", "", regex=False)
 
 # --- FORMULARIO DE CONSULTA ---
 with st.form(key="form_consulta"):
@@ -106,16 +124,16 @@ if btn_consultar or st.session_state.get('verificado', False):
     if not cedula_limpia:
         st.warning("⚠️ Ingrese un número de cédula válido.")
     else:
-        fila = df_datos[df_datos['N° de Cédula'] == cedula_limpia]
+        fila = df_datos[df_datos[col_cedula] == cedula_limpia]
         
         if not fila.empty:
             st.session_state['verificado'] = True
             registro = fila.iloc[0]
             
-            nombre = registro['Nombre y Apellido']
-            ci = registro['N° de Cédula']
-            curso = registro['Curso Culminado']
-            cohorte = registro['Cohorte']
+            nombre = registro.get(col_nombre, "No especificado") if col_nombre else "No especificado"
+            ci = registro[col_cedula]
+            curso = registro.get(col_curso, "No especificado") if col_curso else "No especificado"
+            cohorte = registro.get(col_cohorte, "No especificado") if col_cohorte else "No especificado"
             
             st.success("✅ ¡Identidad Verificada! El registro figura en la nómina oficial.")
             
