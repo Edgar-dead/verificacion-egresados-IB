@@ -69,7 +69,6 @@ ENLACE_WHATSAPP = "https://chat.whatsapp.com/K5XNthkg9QC8swVwl8K0KV"
 def cargar_datos(ruta_archivo):
     try:
         df = pd.read_excel(ruta_archivo, dtype=str)
-        # Limpieza de espacios en los nombres de las columnas
         df.columns = [str(c).strip() for c in df.columns]
         return df, None
     except Exception as e:
@@ -84,29 +83,14 @@ if error_carga:
     st.error(f"❌ Error al abrir la nómina: {error_carga}")
     st.stop()
 
-# --- DETECCIÓN INTELIGENTE DE COLUMNAS ---
-cols = list(df_datos.columns)
+# Asignación exacta según las columnas detectadas en tu Excel
+COL_CEDULA = 'N° de Cédula'
+COL_NOMBRE = 'Nombre y Apellido'
+COL_CURSO = 'Curso culminado'
+COL_COHORTE = 'Cohorte'
 
-def buscar_columna(opciones, lista_cols):
-    for op in opciones:
-        for c in lista_cols:
-            if op.lower() in c.lower().replace("°", "").replace("º", "").replace(".", ""):
-                return c
-    return None
-
-col_cedula = buscar_columna(["cedula", "ci", "documento", "n cedula"], cols)
-col_nombre = buscar_columna(["nombre", "apellido", "participante"], cols)
-col_curso = buscar_columna(["curso", "carrera", "programa"], cols)
-col_cohorte = buscar_columna(["cohorte", "promocion", "periodo"], cols)
-
-# Validación de existencia de columnas mínimas
-if not col_cedula:
-    st.error("❌ No se encontró la columna de cédula en la planilla.")
-    st.info(f"Las columnas detectadas en tu archivo son: {cols}")
-    st.stop()
-
-# Asegurar tratamiento como texto sin espacios
-df_datos[col_cedula] = df_datos[col_cedula].astype(str).str.strip().str.replace(".", "", regex=False).str.replace("-", "", regex=False)
+# Limpieza de valores en la columna de cédula para comparación precisa
+df_datos[COL_CEDULA] = df_datos[COL_CEDULA].astype(str).str.strip().str.replace(".", "", regex=False).str.replace("-", "", regex=False)
 
 # --- FORMULARIO DE CONSULTA ---
 with st.form(key="form_consulta"):
@@ -124,16 +108,16 @@ if btn_consultar or st.session_state.get('verificado', False):
     if not cedula_limpia:
         st.warning("⚠️ Ingrese un número de cédula válido.")
     else:
-        fila = df_datos[df_datos[col_cedula] == cedula_limpia]
+        fila = df_datos[df_datos[COL_CEDULA] == cedula_limpia]
         
         if not fila.empty:
             st.session_state['verificado'] = True
             registro = fila.iloc[0]
             
-            nombre = registro.get(col_nombre, "No especificado") if col_nombre else "No especificado"
-            ci = registro[col_cedula]
-            curso = registro.get(col_curso, "No especificado") if col_curso else "No especificado"
-            cohorte = registro.get(col_cohorte, "No especificado") if col_cohorte else "No especificado"
+            nombre = registro[COL_NOMBRE]
+            ci = registro[COL_CEDULA]
+            curso = registro[COL_CURSO]
+            cohorte = registro[COL_COHORTE]
             
             st.success("✅ ¡Identidad Verificada! El registro figura en la nómina oficial.")
             
